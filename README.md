@@ -1,2 +1,2 @@
 # BeagleboneBlack
-This a ArduCAM library ported for BeagleboneBlack board
+This an ArduCAM library ported for BeagleboneBlack board
