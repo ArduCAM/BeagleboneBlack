@@ -27,14 +27,15 @@
 
   Supported MCU platform
  		-	Theoretically support all Arduino families
-  		-	Arduino UNO R3			(Tested)
-  		-	Arduino MEGA2560 R3		(Tested)
-  		-	Arduino Leonardo R3		(Tested)
-  		-	Arduino Nano			(Tested)
-  		-	Arduino DUE				(Tested)
-  		-	Arduino Yun				(Tested)  		
-  		-	Beaglebon Black			(Tested)
-  		-	Raspberry Pi			(Tested)
+  	-	Arduino UNO R3				(Tested)
+  	-	Arduino MEGA2560 R3		(Tested)
+  	-	Arduino Leonardo R3		(Tested)
+  	-	Arduino Nano					(Tested)
+  	-	Arduino DUE						(Tested)
+  	-	Arduino Yun						(Tested)  		
+  	-	Beaglebon Black				(Tested)
+  	-	Raspberry Pi					(Tested)
+  	- ESP8266-12 						(Tested)
 
   If you make any modifications or improvements to the code, I would appreciate
   that you share the code with me so that I might include it in the next release.
@@ -58,10 +59,11 @@
 /*------------------------------------
 	Revision History:
 	2015/01/16  V1.0  by Lee  Inital library for Beaglebone Black.
+	2015/10/12 	V1.1	by Lee	Optimization
 --------------------------------------*/
 
 #include "BBBCAM.h"
-#include "UTFT_SPI.h"
+//#include "UTFT_SPI.h"
 #include "memorysaver.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -69,13 +71,16 @@
 #include <linux/i2c-dev.h>
 #include <linux/i2c-dev.h>
 
-void delayms(int i)
-{
-	while(i)
-	{i--;}
-}
 
-int PiCAM(uint8_t model)
+
+/*
+Function: 		BBBCAM
+Param: 				camera model
+Description :	BeagleBone Black Camera Instantiation,
+							Initialize the Camera structure,
+							Initialize the SPI and I2C ports
+*/
+int ArduCAM(uint8_t model)
 {
 
 	int ret;
@@ -108,25 +113,25 @@ int PiCAM(uint8_t model)
 			break;
 	}
 	//initialize spi0
-	spi0 = open(spidev0, O_RDWR);       //打开"/dev/spidev1.0"
+	spi0 = open(spidev0, O_RDWR);       
 	if (spi0 < 0)
 		printf("can't open device");
-	ret = ioctl(spi0, SPI_IOC_WR_MODE, &mode);  //SPI模式设置可写
+	ret = ioctl(spi0, SPI_IOC_WR_MODE, &mode);  
 	if (ret == -1)
 		printf("can't set spi mode");
-	ret = ioctl(spi0, SPI_IOC_RD_MODE, &mode); //SPI模式设置可读
+	ret = ioctl(spi0, SPI_IOC_RD_MODE, &mode); 
 	if (ret == -1)
 		printf("can't get spi mode");
-	ret = ioctl(spi0, SPI_IOC_WR_BITS_PER_WORD, &bits);  //SPI的bit/word设置可写
+	ret = ioctl(spi0, SPI_IOC_WR_BITS_PER_WORD, &bits);  
 	if (ret == -1)
 		printf("can't set bits per word");
-	ret = ioctl(spi0, SPI_IOC_RD_BITS_PER_WORD, &bits);   //SPI的bit/word设置可读
+	ret = ioctl(spi0, SPI_IOC_RD_BITS_PER_WORD, &bits);   
 	if (ret == -1)
 		printf("can't get bits per word");
-	ret = ioctl(spi0, SPI_IOC_WR_MAX_SPEED_HZ, &speed);     //SPI的波特率设置可写
+	ret = ioctl(spi0, SPI_IOC_WR_MAX_SPEED_HZ, &speed);     
 	if (ret == -1)
 		printf("can't set max speed hz");
-	ret = ioctl(spi0, SPI_IOC_RD_MAX_SPEED_HZ, &speed);   //SPI的波特率设置可读
+	ret = ioctl(spi0, SPI_IOC_RD_MAX_SPEED_HZ, &speed);  
 	if (ret == -1)
 		printf("can't get max speed hz");
 	// initialize i2c:
@@ -143,6 +148,11 @@ int PiCAM(uint8_t model)
 	}
 }
 
+/*
+Function: 		InitCAM
+Param: 				None
+Description :	Initialize the Camera Module
+*/
 void InitCAM()
 {
 	uint8_t rtn = 0;
@@ -183,7 +193,7 @@ void InitCAM()
 		{
 			#if defined OV7675_CAM
 			wrSensorReg8_8(0x12, 0x80);
-			delay(100);
+			delayms(100);
 			rtn = wrSensorRegs8_8(OV7675_QVGA);
 
 			#endif
@@ -313,6 +323,39 @@ void write_reg(uint8_t addr, uint8_t data)
 	bus_write(addr | 0x80, data);
 }
 
+void bus_write(uint8_t address, uint8_t value)
+{
+	int ret;
+	uint8_t tx[2]={address,value};
+	uint8_t rx[2]={0,};
+	struct spi_ioc_transfer tr = {
+				 .tx_buf = (unsigned long)tx,   
+				 .rx_buf = (unsigned long)rx,   
+				 .len = ARRAY_SIZE(tx),
+				 .delay_usecs = delay,
+				 .speed_hz = speed,
+				 .bits_per_word = bits,
+		  };
+	ret = ioctl(spi0, SPI_IOC_MESSAGE(1), &tr);
+}
+
+uint8_t bus_read(uint8_t address)
+{
+	int ret;
+	uint8_t tx[2]={address,0x00};
+	uint8_t rx[2]={0,};
+	struct spi_ioc_transfer tr = {
+				 .tx_buf = (unsigned long)tx,   
+				 .rx_buf = (unsigned long)rx,   
+				 .len = ARRAY_SIZE(tx),
+				 .delay_usecs = delay,
+				 .speed_hz = speed,
+				 .bits_per_word = bits,
+		  };
+	ret = ioctl(spi0, SPI_IOC_MESSAGE(1), &tr);
+  	return rx[1];
+}
+
 uint8_t wrSensorReg8_8(uint8_t regID, uint8_t regDat)
 {
 	char wbuf[2]={regID,regDat}; //first byte is address to write. others are bytes to be written
@@ -385,15 +428,8 @@ int wrSensorRegs8_8(const struct sensor_reg reglist[])
 		reg_addr = pgm_read_word(&next->reg);
 		reg_val = pgm_read_word(&next->val);
 		err = wrSensorReg8_8(reg_addr, reg_val);
-
-		//if (!err)
-		//{
-		//	return err;
-		//}
-	   	next++;
-
+   	next++;
 	}
-
 	return 1;
 }
 
@@ -410,11 +446,8 @@ int wrSensorRegs8_16(const struct sensor_reg reglist[])
 		reg_addr = pgm_read_word(&next->reg);
 		reg_val = pgm_read_word(&next->val);
 		err = wrSensorReg8_16(reg_addr, reg_val);
-		//	if (!err)
-	   	//return err;
-	   	next++;
+   	next++;
 	}
-
 	return 1;
 }
 
@@ -430,9 +463,7 @@ int wrSensorRegs16_8(const struct sensor_reg reglist[])
 		reg_addr = pgm_read_word(&next->reg);
 		reg_val = pgm_read_word(&next->val);
 		err = wrSensorReg16_8(reg_addr, reg_val);
-		//	if (!err)
-	   	//return err;
-	   	next++;
+   	next++;
 	}
 
 	return 1;
@@ -523,4 +554,10 @@ void getnowtime()
 	strcat(nowtime,sec);
 	printf("nowtime is %s\n",nowtime);
 
+}
+
+void delayms(int i)
+{
+	while(i)
+	{i--;}
 }

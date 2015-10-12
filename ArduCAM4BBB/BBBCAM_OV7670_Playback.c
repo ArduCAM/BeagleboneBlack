@@ -38,7 +38,7 @@ void setup()
   uint8_t temp;
 
   UTFT();
-  PiCAM(OV7670);
+  ArduCAM(OV7670);
 
   printf("ArduCAM Start!\n");
 

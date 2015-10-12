@@ -27,14 +27,15 @@
 
   Supported MCU platform
  		-	Theoretically support all Arduino families
-  		-	Arduino UNO R3			(Tested)
-  		-	Arduino MEGA2560 R3		(Tested)
-  		-	Arduino Leonardo R3		(Tested)
-  		-	Arduino Nano			(Tested)
-  		-	Arduino DUE				(Tested)
-  		-	Arduino Yun				(Tested)  		
-  		-	Beaglebon Black			(Tested)
-  		-	Raspberry Pi			(Tested)
+  	-	Arduino UNO R3				(Tested)
+  	-	Arduino MEGA2560 R3		(Tested)
+  	-	Arduino Leonardo R3		(Tested)
+  	-	Arduino Nano					(Tested)
+  	-	Arduino DUE						(Tested)
+  	-	Arduino Yun						(Tested)  		
+  	-	Beaglebon Black				(Tested)
+  	-	Raspberry Pi					(Tested)
+  	- ESP8266-12 						(Tested)
 
 
   If you make any modifications or improvements to the code, I would appreciate
@@ -59,12 +60,14 @@
 /*------------------------------------
 	Revision History:
 	2015/01/16  V1.0  by Lee  Inital library for Beaglebone Black.
+	2015/10/12 	V1.1	by Lee	Optimization	
 --------------------------------------*/
 
 #ifndef SRC_PICAM_H_
 #define SRC_PICAM_H_
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -75,6 +78,8 @@
 #include <linux/spi/spidev.h>
 #include <linux/i2c-dev.h>
 
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
 #define regtype volatile uint8_t
 #define regsize uint8_t
 
@@ -83,12 +88,9 @@
 #define PROGMEM
 
 #define pgm_read_byte(x)        (*((char *)x))
-//  #define pgm_read_word(x)        (*((short *)(x & 0xfffffffe)))
 #define pgm_read_word(x)        ( ((*((unsigned char *)x + 1)) << 8) + (*((unsigned char *)x)))
 #define pgm_read_byte_near(x)   (*((char *)x))
 #define pgm_read_byte_far(x)    (*((char *)x))
-//  #define pgm_read_word_near(x)   (*((short *)(x & 0xfffffffe))
-//  #define pgm_read_word_far(x)    (*((short *)(x & 0xfffffffe)))
 #define pgm_read_word_near(x)   ( ((*((unsigned char *)x + 1)) << 8) + (*((unsigned char *)x)))
 #define pgm_read_word_far(x)    ( ((*((unsigned char *)x + 1)) << 8) + (*((unsigned char *)x))))
 
@@ -194,18 +196,27 @@ struct CAM{
 	uint8_t sensor_model;
 	uint8_t sensor_addr;
 };
-
+//Camera Handle
 struct CAM myCAM;
-int i2c1;//I2C返回值
-FILE * fp;//SD卡文件返回值
+
+//File Handle
+FILE * fp;
 char filePath[20];
-char nowtime[20];//当前时间
-//uint8_t m_fmt;
-//uint8_t sensor_model;
-//uint8_t sensor_addr;
+char nowtime[20];
+
+//I2C handle
+int i2c1;
 static char *i2cdev1 = "/dev/i2c-1";
 
-int PiCAM(uint8_t model);
+//SPI handle
+int spi0;
+static const char *spidev0 = "/dev/spidev1.0"; 
+static uint8_t mode=0;
+static uint8_t bits = 8;
+static uint16_t delay;
+static uint32_t speed = 1000000;
+
+int ArduCAM(uint8_t model);
 void InitCAM();
 
 void flush_fifo(void);
@@ -215,6 +226,9 @@ uint8_t read_fifo(void);
 
 uint8_t read_reg(uint8_t addr);
 void write_reg(uint8_t addr, uint8_t data);
+
+void bus_write(uint8_t address, uint8_t value);
+uint8_t bus_read(uint8_t address);
 
 int wrSensorRegs8_8(const struct sensor_reg*);
 int wrSensorRegs8_16(const struct sensor_reg*);
@@ -231,8 +245,7 @@ uint8_t rdSensorReg16_8(uint16_t regID, uint8_t* regDat);
 void OV2640_set_JPEG_size(uint8_t size);
 void set_format(uint8_t fmt);
 
-//int bus_write(int address, int value);
-//uint8_t bus_read(int address);
+void delayms(int i);
 
 
 #endif /* SRC_PICAM_H_ */

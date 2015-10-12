@@ -66,13 +66,6 @@
 
 #define BMPIMAGEOFFSET 66
 
-int spi0;//spi返回值
-static const char *spidev0 = "/dev/spidev1.0"; //设备名
-static uint8_t mode=0;
-static uint8_t bits = 8;
-static uint16_t delay;
-static uint32_t speed = 1000000;
-
 #define swap(type, i, j) {type t = i; i = j; j = t;}
 
 struct _current_font
@@ -93,9 +86,6 @@ uint8_t bcolorr,bcolorg,bcolorb;
 
 void UTFT();
 
-void bus_write(uint8_t address, uint8_t value);
-uint8_t bus_read(uint8_t address);
-
 void LCD_Writ_Bus(char VH,char VL, uint8_t mode);
 void LCD_Write_DATA(char VH,char VL);
 void LCD_Write_COM(char VL);
@@ -108,8 +98,6 @@ void clrScr();
 void resetXY();
 void setXY(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2);
 void clrXY();
-		//void LCD_Read_Bus(char* VH, char* VL);
-		//void LCD_Read_uint8_t(char* val);
 
 void LCD_Disp_Filp();
 void LCD_Disp_Normal();

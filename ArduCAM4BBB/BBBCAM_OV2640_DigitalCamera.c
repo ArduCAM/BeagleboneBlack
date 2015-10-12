@@ -29,7 +29,7 @@ void setup()
   uint8_t temp;
 
   UTFT();
-  PiCAM(OV2640);
+  ArduCAM(OV2640);
   printf("ArduCAM Start!\n");
 
   //Check if the ArduCAM SPI bus is OK
@@ -89,7 +89,7 @@ int main(void)
 			//OV2640_set_JPEG_size(OV2640_1600x1200);
 			//Wait until buttom released
 			while(read_reg(ARDUCHIP_TRIG) & SHUTTER_MASK);
-			//delay(1000);
+			sleep(1);
 			start_capture = 1;
 		}
 		else

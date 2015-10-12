@@ -10,13 +10,14 @@
 
 
 #include "UTFT_SPI.h"
+#include "BBBCAM.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
 
 void UTFT()
 {
@@ -28,38 +29,7 @@ void UTFT()
 	display_model=model;
 }
 
-void bus_write(uint8_t address, uint8_t value)
-{
-	int ret;
-	uint8_t tx[2]={address,value};
-	uint8_t rx[2]={0,};
-	struct spi_ioc_transfer tr = {
-				 .tx_buf = (unsigned long)tx,   //定义发送缓冲区指针
-				 .rx_buf = (unsigned long)rx,   //定义接收缓冲区指针
-				 .len = ARRAY_SIZE(tx),
-				 .delay_usecs = delay,
-				 .speed_hz = speed,
-				 .bits_per_word = bits,
-		  };
-	ret = ioctl(spi0, SPI_IOC_MESSAGE(1), &tr);//执行spidev.c中ioctl的default进行数据传输
-}
 
-uint8_t bus_read(uint8_t address)
-{
-	int ret;
-	uint8_t tx[2]={address,0x00};
-	uint8_t rx[2]={0,};
-	struct spi_ioc_transfer tr = {
-				 .tx_buf = (unsigned long)tx,   //定义发送缓冲区指针
-				 .rx_buf = (unsigned long)rx,   //定义接收缓冲区指针
-				 .len = ARRAY_SIZE(tx),
-				 .delay_usecs = delay,
-				 .speed_hz = speed,
-				 .bits_per_word = bits,
-		  };
-	ret = ioctl(spi0, SPI_IOC_MESSAGE(1), &tr);//执行spidev.c中ioctl的default进行数据传输
-  	return rx[1];
-}
 
 void LCD_Write_COM_DATA(char com1,int dat1)
 {
